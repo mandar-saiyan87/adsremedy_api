@@ -106,7 +106,7 @@ router.delete('/:id', async (req, res) => {
       return res.status(404).json({ 'status': 'Failed', 'msg': 'Product not found' })
     }
     const productDel = await Product.findByIdAndDelete(req.params.id);
-    res.status(200).json({ 'status': 'Success', 'msg': 'Note deleted successfully' })
+    res.status(200).json({ 'status': 'Success', 'msg': 'Product deleted successfully' })
   } catch (error) {
     console.log(error.message);
     res.status(500).send("Internal server error")
