@@ -4,9 +4,11 @@ import { body, validationResult } from 'express-validator'
 
 const router = express.Router()
 
+
+// Get all products
 router.get('/', async (req, res) => {
   try {
-    const products = await Product.find({})
+    const products = await Product.find()
     if (products) {
       res.status(200).json({ 'status': 'Success', 'products': products })
     }
@@ -16,16 +18,31 @@ router.get('/', async (req, res) => {
   }
 })
 
+// Get product by id
+router.get('/:id', async (req, res) => {
+  try {
+    const product = await Product.findById(req.params.id)
+    if (!product) {
+      return res.status(404).json({ 'status': 'Failed', 'msg': 'Product not found' })
+    }
+    return res.status(200).json({ 'status': 'Success', 'product': product })
+  } catch (error) {
+    console.log(error.message);
+    res.status(500).send("Internal server error")
+  }
+})
+
+// Add new product
 router.post('/', [
-  body('name', 'Enter valid title').isLength({ min: 4 }),
+  body('name', 'Enter valid name').isLength({ min: 4 }),
   body('description', 'Description atleast 5 characters').isLength({ min: 5 }),
   body('price', 'Enter valid price').notEmpty()
 ],
   async (req, res) => {
     try {
-      const { name, description, price } = req.body
       //Validate data, if not return validation error
       const error = validationResult(req)
+      const { name, description, price } = req.body
       if (!error.isEmpty()) {
         return res.status(400).json({ errors: error.array() });
       }
@@ -34,7 +51,9 @@ router.post('/', [
       })
       const addProduct = await newProduct.save()
       if (addProduct._id) {
-        res.status(201).json({ 'status': 'Success', 'productId': addProduct })
+        res.status(201).json({ 'status': 'Success', 'product': addProduct })
+      } else {
+        res.status(400).json({ 'status': 'Failed', 'msg': 'Failed to add new product' })
       }
     } catch (error) {
       console.log(error.message);
@@ -44,6 +63,7 @@ router.post('/', [
   }
 )
 
+// Edit / Modify existing product
 router.put('/:id', [
   body('name', 'Enter valid title').isLength({ min: 4 }),
   body('description', 'Description atleast 5 characters').isLength({ min: 5 }),
@@ -51,12 +71,12 @@ router.put('/:id', [
 ],
   async (req, res) => {
     try {
-      const { name, description, price } = req.body
       //Validate data, if not return validation error
       const error = validationResult(req)
       if (!error.isEmpty()) {
         return res.status(400).json({ errors: error.array() });
       }
+      const { name, description, price } = req.body
       const updatedProd = {}
       if (name) { updatedProd.name = name }
       if (description) { updatedProd.description = description }
@@ -77,6 +97,7 @@ router.put('/:id', [
   }
 )
 
+// Delete product
 router.delete('/:id', async (req, res) => {
   try {
     // Find if product by id exist
